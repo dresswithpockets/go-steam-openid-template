@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourcePerFileMappings">
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/37a2be15-01da-4d67-b47c-68095b32f7a2/console_1.sql" value="37a2be15-01da-4d67-b47c-68095b32f7a2" />
+    <file url="file://$PROJECT_DIR$/db/migrations/20251029072239_user-auth.down.sql" value="37a2be15-01da-4d67-b47c-68095b32f7a2" />
+    <file url="file://$PROJECT_DIR$/db/migrations/20251029072239_user-auth.up.sql" value="37a2be15-01da-4d67-b47c-68095b32f7a2" />
+    <file url="file://$PROJECT_DIR$/db/sql/openid.sql" value="37a2be15-01da-4d67-b47c-68095b32f7a2" />
+    <file url="file://$PROJECT_DIR$/db/sql/user.sql" value="37a2be15-01da-4d67-b47c-68095b32f7a2" />
+  </component>
+</project>

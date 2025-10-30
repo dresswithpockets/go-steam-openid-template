@@ -1,0 +1,39 @@
+services:
+  database:
+    image: postgres:18
+    container_name: postgres_local
+    ports:
+      - "15432:5432"
+    env_file:
+      - path: .env
+        required: true
+      - path: .env.local
+        required: false
+      - path: .env.development.local
+        required: false
+    networks:
+      - postgres-network
+    volumes:
+      - ${PWD}/.data-db/:/var/lib/postgresql/
+
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - "15433:80"
+    env_file:
+      - path: .env
+        required: true
+      - path: .env.local
+        required: false
+      - path: .env.development.local
+        required: false
+    depends_on:
+      - database
+    networks:
+      - postgres-network
+    volumes:
+      - ${PWD}/.data-pgadmin/:/var/lib/pgadmin/
+
+networks:
+  postgres-network:
+    driver: bridge
