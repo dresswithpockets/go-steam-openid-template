@@ -1,0 +1,1 @@
+# Golang Steam OpenID Template
