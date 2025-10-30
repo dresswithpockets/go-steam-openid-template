@@ -2,6 +2,7 @@
   <dictionary name="project">
     <words>
       <w>nonces</w>
+      <w>sqlc</w>
       <w>sqlizer</w>
     </words>
   </dictionary>
