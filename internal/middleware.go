@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/dresswithpockets/go-steam-openid-example/db"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
@@ -61,8 +62,13 @@ func UserAuthHandler(ctx huma.Context, next func(huma.Context)) {
 		return
 	}
 
-	// TODO: disallow list
-	// TUTORIAL: we shouldn't let the user
+	// TUTORIAL: if the user's token has been marked as disallowed, then the authentication
+	//           should always fail
+	isDisallowed, err := db.Queries.GetDisallowToken(ctx.Context(), tokenId)
+	if isDisallowed || err != nil {
+		next(ctx)
+		return
+	}
 
 	// TUTORIAL: The huma context cant be mutated directly. Instead, we have to wrap
 	//           the existing context with a new context whenever we want to add new

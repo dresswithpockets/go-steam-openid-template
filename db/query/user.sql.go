@@ -62,3 +62,14 @@ func (q *Queries) FindUserBySteamID(ctx context.Context, steamID string) (User, 
 	err := row.Scan(&i.ID, &i.CreatedAt, &i.SteamID)
 	return i, err
 }
+
+const getDisallowToken = `-- name: GetDisallowToken :one
+select exists(select token_id, created_at from disallow_token where token_id = $1)
+`
+
+func (q *Queries) GetDisallowToken(ctx context.Context, tokenID uuid.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, getDisallowToken, tokenID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}

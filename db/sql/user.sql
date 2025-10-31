@@ -16,3 +16,6 @@ returning *;
 
 -- name: DisallowToken :exec
 insert into disallow_token (token_id) values ($1);
+
+-- name: GetDisallowToken :one
+select exists(select * from disallow_token where token_id = $1);
