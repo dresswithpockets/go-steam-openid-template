@@ -33,7 +33,7 @@ const (
 	PrincipalContextKey = "principal"
 
 	SteamOidcIssuer      = "https://steamcommunity.com/openid/"
-	SteamOidRedirectPath = "/signin/callback"
+	SteamOidRedirectPath = "/steam/callback"
 )
 
 var (
