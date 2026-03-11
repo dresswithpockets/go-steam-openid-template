@@ -33,7 +33,7 @@ const (
 	PrincipalContextKey = "principal"
 
 	SteamOidcIssuer      = "https://steamcommunity.com/openid/"
-	SteamOidRedirectPath = "/internal/session/steam/callback"
+	SteamOidRedirectPath = "/signin/callback"
 )
 
 var (
@@ -87,40 +87,60 @@ func handleSteamDiscover(ctx context.Context, input *DiscoverInput) (*DiscoverOu
 	}
 
 	return &DiscoverOutput{
-		Status: http.StatusTemporaryRedirect,
+		Status: http.StatusOK,
 		Url:    redirectUrl,
 	}, nil
 }
 
 type CallbackInput struct {
-	URL url.URL
+	Ns            string `query:"openid.ns"`
+	Mode          string `query:"openid.mode"`
+	OpEndpoint    string `query:"openid.op_endpoint"`
+	ClaimedId     string `query:"openid.claimed_id"`
+	Identity      string `query:"openid.identity"`
+	ReturnTo      string `query:"openid.return_to"`
+	ResponseNonce string `query:"openid.response_nonce"`
+	AssocHandle   string `query:"openid.assoc_handle"`
+	Signed        string `query:"openid.signed"`
+	Sig           string `query:"openid.sig"`
 }
 
-func (d *CallbackInput) Resolve(ctx huma.Context) []error {
-	d.URL = ctx.URL()
-	return nil
+type Callback struct {
+	JWT string `json:"jwt"`
 }
 
 type CallbackOutput struct {
-	Status    int
-	Url       string      `header:"Location"`
-	SetCookie http.Cookie `header:"Set-Cookie"`
+	Body Callback
 }
 
 func handleSteamCallback(ctx context.Context, input *CallbackInput) (*CallbackOutput, error) {
 	// TUTORIAL: our openid library verifies that the original request came from our authority, but it needs us to
 	//           provide a URL to verify that the incoming callback request has the authority we expect. Here we're
 	//           just replacing the `https://blahblah.com` part of the URL with our OidRealm
-	inputURL := input.URL
-	fullURL := OidRealmURL.JoinPath(inputURL.Path)
-	fullURL.RawQuery = inputURL.RawQuery
+
+	values := make(url.Values)
+	values.Set("openid.ns", input.Ns)
+	values.Set("openid.mode", input.Mode)
+	values.Set("openid.op_endpoint", input.OpEndpoint)
+	values.Set("openid.claimed_id", input.ClaimedId)
+	values.Set("openid.identity", input.Identity)
+	values.Set("openid.return_to", input.ReturnTo)
+	values.Set("openid.response_nonce", input.ResponseNonce)
+	values.Set("openid.assoc_handle", input.AssocHandle)
+	values.Set("openid.signed", input.Signed)
+	values.Set("openid.sig", input.Sig)
+
+	fullUrl := OidRealmURL.JoinPath(SteamOidRedirectPath)
+	fullUrl.RawQuery = values.Encode()
+
+	fmt.Println("fullUrl: ", fullUrl.String())
 
 	// TUTORIAL: verify the openid callback. The discovery cache caches some response information to make verification
 	//           faster if the callback is hit with the same user again. The nonce store ensures that a callback request
 	//           is never processed by our servers more than once.
-	id, err := openid.Verify(fullURL.String(), discoveryCache, db.NewNonceStore(ctx, db.Queries))
+	id, err := openid.Verify(fullUrl.String(), discoveryCache, db.NewNonceStore(ctx, db.Queries))
 	if err != nil {
-		log.Logger.Debug("Error verifying openid callback", "error", err, "uri", fullURL)
+		log.Logger.Debug("Error verifying openid callback", "error", err, "uri", fullUrl)
 		return nil, eris.Wrap(err, "Error verifying openid callback")
 	}
 
@@ -181,16 +201,8 @@ func handleSteamCallback(ctx context.Context, input *CallbackInput) (*CallbackOu
 
 	// TUTORIAL: and finally, setting the session cookie with our session JWT!
 	return &CallbackOutput{
-		Status: http.StatusTemporaryRedirect,
-		Url:    "/",
-		SetCookie: http.Cookie{
-			Name:     SessionCookieName,
-			Path:     "/",
-			Value:    signedJwt,
-			MaxAge:   int(expiresAt.Sub(time.Now().UTC()).Seconds()),
-			Expires:  expiresAt,
-			Secure:   SessionCookieSecure,
-			SameSite: http.SameSiteStrictMode,
+		Body: Callback{
+			JWT: signedJwt,
 		},
 	}, nil
 }
@@ -373,5 +385,5 @@ func RegisterRoutes(api huma.API) {
 
 		Security:    sessionCookieSecurityMap,
 		Middlewares: requireUserSessionMiddlewares,
-	}, handleSteamDiscover)
+	}, handleSteamSignOut)
 }
